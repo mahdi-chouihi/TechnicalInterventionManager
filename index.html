@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Intervention Manager</title>
+</head>
+<body>
+  <h1>Technical Interventions</h1>
+
+  <h2>Admin - Create Intervention</h2>
+  <input id="title" placeholder="Title" />
+  <input id="description" placeholder="Description" />
+  <input id="technician" placeholder="Technician Name" />
+  <button onclick="createIntervention()">Create</button>
+
+  <hr />
+
+  <h2>Technician - View My Interventions</h2>
+  <input id="techName" placeholder="Your Name" />
+  <button onclick="loadInterventions()">Load</button>
+
+  <ul id="interventionList"></ul>
+
+<script>
+const API = "http://localhost:3000";
+
+// ADMIN CREATE
+async function createIntervention() {
+  const title = document.getElementById("title").value;
+  const description = document.getElementById("description").value;
+  const technician = document.getElementById("technician").value;
+
+  await fetch(`${API}/interventions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, description, technician })
+  });
+
+  alert("Intervention created!");
+}
+
+// LOAD TECH INTERVENTIONS
+async function loadInterventions() {
+  const name = document.getElementById("techName").value;
+
+  const res = await fetch(`${API}/interventions/${name}`);
+  const data = await res.json();
+
+  const list = document.getElementById("interventionList");
+  list.innerHTML = "";
+
+  data.forEach(intervention => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <strong>${intervention.title}</strong> 
+      (${intervention.status})
+      <button onclick="updateStatus(${intervention.id}, '${intervention.status}')">
+        Next Status
+      </button>
+    `;
+    list.appendChild(li);
+  });
+}
+
+// UPDATE STATUS
+async function updateStatus(id, currentStatus) {
+  let nextStatus = "";
+
+  if (currentStatus === "To Do") nextStatus = "In Progress";
+  else if (currentStatus === "In Progress") nextStatus = "Done";
+  else return alert("Already completed!");
+
+  await fetch(`${API}/interventions/${id}/status`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: nextStatus })
+  });
+
+  loadInterventions();
+}
+</script>
+</body>
+</html>
